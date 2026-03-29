@@ -1,113 +1,81 @@
 import json
-import os
 from collections import defaultdict, Counter
 
-
 class NGramModel:
-    """
-    Responsible for building, storing, saving, loading,
-    and performing backoff lookup on n-gram probability tables.
-    """
-
-    def __init__(self, n: int):
+    def __init__(self, n):
         self.n = n
         self.vocab = set()
-        self.counts = {i: defaultdict(Counter) for i in range(1, n + 1)}
+        self.counts = {i: defaultdict(Counter) for i in range(1, n+1)}
         self.probs = {}
 
-    def build_vocab(self, token_file: str, unk_threshold: int) -> None:
+    def build_vocab(self, token_file, unk_threshold):
         word_counts = Counter()
 
-        with open(token_file, encoding="utf-8") as f:
+        with open(token_file) as f:
             for line in f:
                 word_counts.update(line.split())
 
         self.vocab = {w for w, c in word_counts.items() if c >= unk_threshold}
         self.vocab.add("<UNK>")
 
-    def build_counts_and_probabilities(self, token_file: str) -> None:
-        with open(token_file, encoding="utf-8") as f:
+    def build_counts_and_probabilities(self, token_file):
+        with open(token_file) as f:
             for line in f:
-                words = [
-                    w if w in self.vocab else "<UNK>"
-                    for w in line.split()
-                ]
+                words = line.split()
 
                 for i in range(len(words)):
-                    for order in range(1, self.n + 1):
-                        if i + order <= len(words):
-                            ngram = words[i:i + order]
+                    for n in range(1, self.n + 1):
+                        if i + n <= len(words):
+                            ngram = words[i:i+n]
                             context = tuple(ngram[:-1])
                             word = ngram[-1]
-                            self.counts[order][context][word] += 1
+                            self.counts[n][context][word] += 1
 
-        # Convert counts → probabilities
+        # Convert to probabilities
         self.probs = {}
-
-        for order, table in self.counts.items():
-            self.probs[order] = {}
-            for context, counter in table.items():
+        for n in self.counts:
+            self.probs[n] = {}
+            for context, counter in self.counts[n].items():
                 total = sum(counter.values())
-                self.probs[order][context] = {
+                self.probs[n][context] = {
                     w: c / total for w, c in counter.items()
                 }
 
-    def lookup(self, context: list[str]) -> dict:
-        """
-        Backoff lookup from n-gram down to unigram.
-        """
+    def lookup(self, context):
         for order in range(self.n, 0, -1):
-            if order > 1:
-                ctx = context[-(order - 1):]
-                ctx = tuple(ctx)
-            else:
-                ctx = ()
-
+            ctx = tuple(context[-(order-1):]) if order > 1 else ()
             if ctx in self.probs.get(order, {}):
                 return self.probs[order][ctx]
-
         return {}
 
-    def save_model(self, path: str) -> None:
-        """
-        Save model probabilities to JSON using string contexts.
-        """
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    # def save_model(self, path):
+    #     with open(path, "w") as f:
+    #         json.dump(self.probs, f)
 
-        serializable = {}
+def load(self, model_path, vocab_path):
+    import json
 
-        for order, table in self.probs.items():
-            serializable[f"{order}gram"] = {}
-            for context, next_words in table.items():
-                context_str = " ".join(context)
-                serializable[f"{order}gram"][context_str] = next_words
+    with open(model_path) as f:
+        raw = json.load(f)
 
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(serializable, f, indent=2)
+    self.probs = {}
 
-    def save_vocab(self, path: str) -> None:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    for n in raw:
+        order = int(n)
+        self.probs[order] = {}
 
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(sorted(self.vocab), f, indent=2)
+        for context_str, next_words in raw[n].items():
+            if context_str == "":
+                context = ()
+            else:
+                context = tuple(context_str.split())
 
-    def load(self, model_path: str, vocab_path: str) -> None:
-        with open(model_path, encoding="utf-8") as f:
-            raw = json.load(f)
+            self.probs[order][context] = next_words
 
-        self.probs = {}
+    with open(vocab_path) as f:
+        self.vocab = set(json.load(f))
 
-        for key, table in raw.items():
-            order = int(key.replace("gram", ""))
-            self.probs[order] = {}
 
-            for context_str, next_words in table.items():
-                if context_str == "":
-                    context = ()
-                else:
-                    context = tuple(context_str.split())
-
-                self.probs[order][context] = next_words
-
-        with open(vocab_path, encoding="utf-8") as f:
-            self.vocab = set(json.load(f))
+    # def save_vocab(self, path):
+    #     with open(path, "w") as f:
+    #         json.dump(list(self.vocab), f)
