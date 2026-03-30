@@ -47,8 +47,3 @@ class Normalizer:
         with open(filepath, "w", encoding="utf-8") as f:
             for sentence in sentences:
                 f.write(" ".join(sentence) + "\n")
-
-
-
-
-                safasdfasdfasd
