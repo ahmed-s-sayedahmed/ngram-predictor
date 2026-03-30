@@ -43,7 +43,19 @@ class Normalizer:
     def word_tokenize(self, sentence):
         return sentence.split()
 
+    # def save(self, sentences, filepath):
+    #     with open(filepath, "w", encoding="utf-8") as f:
+    #         for sentence in sentences:
+    #             f.write(" ".join(sentence) + "\n")
+
+    
     def save(self, sentences, filepath):
-        with open(filepath, "w", encoding="utf-8") as f:
-            for sentence in sentences:
-                f.write(" ".join(sentence) + "\n")
+     """
+     Write tokenized sentences to output file.
+        Ensures the output directory exists.
+    """
+     os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+     with open(filepath, "w", encoding="utf-8") as f:
+        for tokens in sentences:
+            f.write(" ".join(tokens) + "\n")
