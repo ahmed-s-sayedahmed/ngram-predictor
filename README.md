@@ -12,7 +12,7 @@ The project is structured into modular components: data preparation, model build
 
 ## Requirements
 
-* Python 3.10 (recommended via Anaconda)
+* Python 3.0 (recommended via Anaconda)
 * Install dependencies using:
 
 ```bash
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/ngram-predictor.git
+git clone https://github.com/ahmed-s-sayedahmed/ngram-predictor.git
 cd ngram-predictor
 ```
 
@@ -52,7 +52,7 @@ TRAIN_RAW_DIR=data/raw/train/
 TRAIN_TOKENS=data/processed/train_tokens.txt
 MODEL=data/model/model.json
 VOCAB=data/model/vocab.json
-UNK_THRESHOLD=3
+UNK_THRESHOLD=1
 TOP_K=3
 NGRAM_ORDER=4
 ```
